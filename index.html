@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>OHCA 現場計時與紀錄器</title>
-  <!-- 引入 Tailwind CSS 建立精美 UI -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -28,13 +27,11 @@
 </head>
 <body class="p-4 max-w-md mx-auto pb-12 select-none">
 
-  <!-- 自訂通知提示 Banner -->
   <div id="custom-toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl text-sm font-medium flex items-center gap-2 opacity-0 pointer-events-none transition-all duration-300">
     <span id="toast-icon">ℹ️</span>
     <span id="toast-message">提示訊息</span>
   </div>
 
-  <!-- 自訂新案件確認 Modal -->
   <div id="confirm-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 p-6">
     <div class="bg-white rounded-3xl p-6 w-full max-w-xs shadow-2xl transform scale-95 transition-transform duration-300">
       <h3 class="text-lg font-bold text-slate-800 mb-2">開始新案件？</h3>
@@ -46,7 +43,6 @@
     </div>
   </div>
 
-  <!-- 頂部設定抽屜面板 -->
   <div class="bg-white rounded-3xl p-4 shadow-sm mb-4 border border-slate-100">
     <div class="flex justify-between items-center">
       <span class="text-xs font-bold text-slate-400 tracking-wider">API 伺服器對接設定</span>
@@ -67,7 +63,6 @@
     </div>
   </div>
 
-  <!-- 修正後的語音大按鈕：改為「點擊開關」模式，徹底解決 aborted 錯誤 -->
   <div class="bg-white rounded-3xl p-4 shadow-sm mb-4 border-2 border-amber-100">
     <button id="btn-voice" onclick="toggleVoice()"
             class="w-full bg-amber-500 hover:bg-amber-600 text-white rounded-2xl py-4 flex items-center justify-center gap-3 font-bold text-lg shadow-sm transition select-none">
@@ -79,7 +74,6 @@
     </div>
   </div>
 
-  <!-- 頂部計時與狀態看板 -->
   <div class="bg-white rounded-3xl p-5 shadow-sm mb-4">
     <div class="flex justify-between items-center mb-4">
       <div>
@@ -101,7 +95,6 @@
     </div>
   </div>
 
-  <!-- 核心快速給藥計時按鈕 -->
   <div class="grid grid-cols-2 gap-3 mb-4">
     <div id="btn-epi" onclick="startTimer('epi', 180)" class="bg-[#ba3c3c] text-white rounded-3xl p-4 cursor-pointer shadow-sm relative active:scale-98 transition select-none">
       <div class="flex justify-between items-start">
@@ -126,7 +119,6 @@
     </div>
   </div>
 
-  <!-- 快速紀錄 (IO/IV & 心律分析) -->
   <div class="grid grid-cols-2 gap-3 mb-4">
     <div onclick="triggerEvent('建立 IO/IV')" class="bg-[#a8763e] text-white rounded-3xl p-4 cursor-pointer shadow-sm active:scale-98 transition">
       <div class="font-semibold text-xs opacity-90">IO/IV 建立</div>
@@ -138,7 +130,6 @@
     </div>
   </div>
 
-  <!-- 手動補登 / 新增紀錄 面板 -->
   <div class="bg-white rounded-3xl p-5 shadow-sm mb-4 border border-slate-100">
     <h3 class="font-bold text-slate-800 mb-3 text-sm flex items-center gap-1.5">
       <span class="w-1.5 h-3.5 rounded-full bg-amber-500"></span>
@@ -155,7 +146,6 @@
       <input type="time" id="form-time" class="border border-slate-200 rounded-xl px-2 py-2 text-xs text-slate-700 bg-slate-50 focus:outline-none">
       <button onclick="submitForm()" class="bg-slate-800 text-white px-4 py-2 rounded-xl font-bold text-xs active:scale-95 transition">新增</button>
     </div>
-    <!-- 生命徵象 -->
     <div class="space-y-2 mt-4 pt-3 border-t border-slate-100 text-xs text-slate-600">
       <div class="flex items-center justify-between">
         <span class="font-semibold">血壓 (BP)</span>
@@ -172,7 +162,6 @@
     </div>
   </div>
 
-  <!-- 歷史處置紀錄面板 -->
   <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
     <div class="flex justify-between items-center mb-3">
       <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5">
@@ -181,7 +170,7 @@
       </h3>
     </div>
     <div id="log-container" class="space-y-2 text-xs text-slate-500 max-h-52 overflow-y-auto">
-      <div class="text-center py-6 text-slate-400">尚未記錄任何處置</div>
+      <div id="no-log-hint" class="text-center py-6 text-slate-400">尚未記錄任何處置</div>
     </div>
   </div>
 
@@ -193,7 +182,7 @@
     let timers = { epi: null, amio: null };
     let counts = { epi: 0, amio: 0 };
     let startTime = null;
-    let isRecording = false; // 紀錄目前是否正在收音中
+    let isRecording = false; 
 
     function showToast(message, icon = "ℹ️") {
       const toast = document.getElementById('custom-toast');
@@ -264,14 +253,23 @@
 
     function triggerEvent(actionName, customTime = null, explicitPayload = null) {
       const timeStr = customTime || new Date().toTimeString().split(' ')[0];
+      
+      // 安全校正欄位抓取，絕不產生 undefined 物件
+      let sbp = document.getElementById('v-sbp').value || '';
+      let dbp = document.getElementById('v-dbp').value || '';
+      let hr = document.getElementById('v-hr').value || '';
+      
       const payload = explicitPayload || {
-        time: timeStr, action: actionName,
-        bp: document.getElementById('v-sbp').value ? `${document.getElementById('v-sbp').value}/${document.getElementById('v-dbp').value}` : '',
-        hr: document.getElementById('v-hr').value,
+        time: timeStr, 
+        action: actionName,
+        bp: (sbp || dbp) ? `${sbp}/${dbp}` : '',
+        hr: hr,
         spo2: '', etco2: '', ecg: '', temp: ''
       };
 
       const logContainer = document.getElementById('log-container');
+      const hintEl = document.getElementById('no-log-hint');
+      if (hintEl) hintEl.remove(); // 徹底移除提示文字
       if (logContainer.innerText.includes('尚未記錄')) logContainer.innerHTML = '';
       
       const newLog = document.createElement('div');
@@ -307,7 +305,7 @@
     function confirmResetAll() { location.reload(); }
 
     // =================================================
-    // 🎤 語音辨識核心（Toggle 切換模式，徹底根除 aborted 錯誤）
+    // 🎤 語音辨識核心（完美修復狀態與盲錄渲染版）
     // =================================================
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     let recognition = null;
@@ -315,98 +313,152 @@
     if (SpeechRecognition) {
       recognition = new SpeechRecognition();
       recognition.lang = 'zh-TW';
-      recognition.continuous = false; // 單句辨識
+      recognition.continuous = false;
       recognition.interimResults = false;
 
+      // 麥克風真正啟動成功
       recognition.onstart = () => {
-        document.getElementById('btn-voice').classList.add('mic-active');
+        isRecording = true; // 強制校正狀態為錄音中
+        const btnVoice = document.getElementById('btn-voice');
+        if(btnVoice) btnVoice.classList.add('mic-active');
+        
         document.getElementById('mic-icon').innerText = "🛑";
-        document.getElementById('mic-text').innerText = "正在錄音...點擊以送出";
-        document.getElementById('voice-preview').innerText = "系統正在聆聽，說完請「再點一下」按鈕結束...";
+        document.getElementById('mic-text').innerText = "正在錄音...請說話";
+        document.getElementById('voice-preview').innerText = "系統正在聆聽...說完請「再點擊一次」按鈕送出。";
       };
 
       recognition.onerror = (e) => {
         console.error("語音錯誤:", e.error);
         if (e.error === 'not-allowed') {
-          document.getElementById('voice-preview').innerText = "❌ 麥克風遭拒：請點網址旁安全鎖頭，允許麥克風存取。";
+          document.getElementById('voice-preview').innerText = "❌ 麥克風遭拒：請檢查瀏覽器權限。";
         } else if (e.error === 'no-speech') {
-          document.getElementById('voice-preview').innerText = "❌ 未偵測到人聲，請再試一次。";
-        } else {
-          document.getElementById('voice-preview').innerText = `❌ 錯誤代碼: ${e.error}，請確保在 Safari/Chrome 下打開。`;
+          document.getElementById('voice-preview').innerText = "❌ 未偵測到聲音，請再試一次。";
+        } else if (e.error !== 'aborted') {
+          document.getElementById('voice-preview').innerText = `❌ 錯誤: ${e.error}`;
         }
         resetVoiceVisuals();
       };
 
-      recognition.onend = () => {
-        resetVoiceVisuals();
+      // 錄音結束
+      recognition.onend = () => { 
+        resetVoiceVisuals(); 
       };
 
       recognition.onresult = (event) => {
-        const text = event.results[0][0].transcript;
-        document.getElementById('voice-preview').innerText = `聽到的內容: "${text}"`;
-        parseVoiceCommand(text);
+        if (event.results && event.results[0]) {
+          const text = event.results[0][0].transcript;
+          document.getElementById('voice-preview').innerText = `聽到的內容: "${text}"`;
+          parseVoiceCommand(text); // 觸發解析與面板渲染
+        }
       };
     }
 
-    // 主切換開關 (點一下開、再點一下關)
+    // 控制按鈕點擊開關
     function toggleVoice() {
-      if (!recognition) return showToast("當前裝置不支援原生語音辨識。", "❌");
+      if (!recognition) return showToast("當前裝置或瀏覽器不支援語音辨識。", "❌");
       
       if (!isRecording) {
-        // 啟動錄音
-        isRecording = true;
-        try {
-          recognition.start();
-        } catch(e) { console.log(e); }
+        try { 
+          recognition.start(); 
+        } catch(e) {
+          console.log("啟動語音失敗，嘗試強制重置狀態:", e);
+          isRecording = false;
+        }
       } else {
-        // 停止錄音並送出辨識
-        isRecording = false;
-        try {
-          recognition.stop();
-        } catch(e) { console.log(e); }
+        try { 
+          recognition.stop(); 
+        } catch(e) {
+          resetVoiceVisuals();
+        }
       }
     }
 
     function resetVoiceVisuals() {
-      isRecording = false;
-      document.getElementById('btn-voice').classList.remove('mic-active');
+      isRecording = false; 
+      const btnVoice = document.getElementById('btn-voice');
+      if(btnVoice) btnVoice.classList.remove('mic-active');
+      
       document.getElementById('mic-icon').innerText = "🎤";
       document.getElementById('mic-text').innerText = "點擊開始 口述紀錄";
     }
 
     function parseVoiceCommand(text) {
       if(!text || text.trim() === "") return;
-      const command = text.toLowerCase();
+      const command = text.toLowerCase().trim();
       const nowTime = new Date().toTimeString().split(' ')[0];
 
       if (command.includes('epi') || command.includes('強心') || command.includes('針')) {
         startTimer('epi', 180);
         showToast("語音辨識：Epi 1 支！", "💉");
-      } else if (command.includes('amio') || command.includes('抗心律')) {
+      } 
+      else if (command.includes('amio') || command.includes('抗心律')) {
         startTimer('amio', 240);
         showToast("語音辨識：Amio 1 支！", "💉");
-      } else if (command.includes('血壓')) {
+      } 
+      else if (command.includes('血壓')) {
         const numbers = command.match(/\d+/g);
         if (numbers && numbers.length >= 2) {
-          document.getElementById('v-sbp').value = numbers[0];
-          document.getElementById('v-dbp').value = numbers[1];
           triggerEvent('生命徵象量測 (語音)', nowTime, {
-            time: nowTime, action: '生命徵象量測 (語音)', bp: `${numbers[0]}/${numbers[1]}`, hr:'', spo2:'', etco2:'', ecg:'', temp:''
+            time: nowTime, action: `生命徵象量測 (BP: ${numbers[0]}/${numbers[1]})`, bp: `${numbers[0]}/${numbers[1]}`, hr:'', spo2:'', etco2:'', ecg:'', temp:''
           });
           showToast(`語音登錄血壓：${numbers[0]}/${numbers[1]}`, "💓");
+        } else {
+          safeVoiceLog(`口述紀錄：${text}`, nowTime);
         }
-      } else if (command.includes('建立') || command.includes('打針') || command.includes('iv') || command.includes('io')) {
+      } 
+      else if (command.includes('建立') || command.includes('打針') || command.includes('iv') || command.includes('io')) {
         triggerEvent('建立 IO/IV');
         showToast("語音辨識：建立 IO/IV", "✓");
-      } else if (command.includes('分析') || command.includes('心律')) {
+      } 
+      else if (command.includes('分析') || command.includes('心律')) {
         triggerEvent('心律分析');
         showToast("語音辨識：心律分析", "✓");
-      } else if (command.includes('rosc') || command.includes('恢復心跳')) {
+      } 
+      else if (command.includes('rosc') || command.includes('恢復心跳')) {
         triggerEvent('ROSC');
         showToast("語音辨識：ROSC 成功！", "🎉");
-      } else {
-        triggerEvent(`口述紀錄：${text}`);
-        showToast(`已盲錄：${text}`, "✓");
+      } 
+      else {
+        safeVoiceLog(`口述：${text}`, nowTime);
+      }
+    }
+
+    // 獨立的語音盲錄渲染函數（🔥已徹底修正節點 ID 判定錯誤）
+    function safeVoiceLog(displayMessage, timeStr) {
+      showToast("已口述紀錄", "✓");
+      
+      const voicePayload = {
+        time: timeStr,
+        action: displayMessage,
+        bp: '', hr: '', spo2: '', etco2: '', ecg: '', temp: ''
+      };
+
+      // 🔴 完美修復點：精準鎖定並清空初始提示，防止卡死
+      const hintEl = document.getElementById('no-log-hint');
+      if (hintEl) hintEl.remove();
+
+      const logContainer = document.getElementById('log-container');
+      if (logContainer) {
+        if (logContainer.innerText.includes('尚未記錄')) logContainer.innerHTML = '';
+
+        const newLog = document.createElement('div');
+        newLog.className = 'flex justify-between items-center bg-amber-50/60 p-3 rounded-2xl text-slate-700 border border-amber-100 animate-pulse';
+        newLog.innerHTML = `<div><span class="text-amber-500 font-mono">[${voicePayload.time}]</span> <b class="text-slate-800">${voicePayload.action}</b></div> <span class="sync-status text-[10px] text-slate-400 font-semibold">⏳ 同步中</span>`;
+        
+        logContainer.insertBefore(newLog, logContainer.firstChild);
+        logContainer.scrollTop = 0;
+
+        fetch(currentGasUrl, {
+          method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(voicePayload)
+        }).then(() => {
+          newLog.classList.remove('animate-pulse');
+          const statusEl = newLog.querySelector('.sync-status');
+          if(statusEl) { statusEl.innerHTML = '✓ 已同步'; statusEl.className = 'sync-status text-[10px] text-emerald-600 font-bold'; }
+        }).catch(() => {
+          newLog.classList.remove('animate-pulse');
+          const statusEl = newLog.querySelector('.sync-status');
+          if(statusEl) { statusEl.innerHTML = '✓ 已送出'; statusEl.className = 'sync-status text-[10px] text-amber-600 font-bold'; }
+        });
       }
     }
   </script>
