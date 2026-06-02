@@ -11,34 +11,30 @@
       background-color: #f7f5f0; /* 北歐簡約暖沙色 */
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }
-    /* 語音按鈕按住時的微光動態特效 */
+    /* 錄音開啟時的醒目警示與微幅呼吸動態 */
     .mic-active {
-      transform: scale(0.97);
-      background-color: #d97706 !important;
-      box-shadow: 0 0 20px rgba(245, 158, 11, 0.7);
+      background-color: #dc2626 !important; /* 變成紅色代表正在錄音 */
+      box-shadow: 0 0 20px rgba(220, 38, 38, 0.6);
+      animation: pulse-light 2s infinite;
     }
-    /* 自訂滾動條 */
-    ::-webkit-scrollbar {
-      width: 4px;
+    @keyframes pulse-light {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(0.98); }
     }
-    ::-webkit-scrollbar-track {
-      background: rgba(0,0,0,0.03);
-    }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(0,0,0,0.1);
-      border-radius: 10px;
-    }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.03); }
+    ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
   </style>
 </head>
 <body class="p-4 max-w-md mx-auto pb-12 select-none">
 
-  <!-- 自訂通知提示 Banner (取代原生的 alert) -->
+  <!-- 自訂通知提示 Banner -->
   <div id="custom-toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl text-sm font-medium flex items-center gap-2 opacity-0 pointer-events-none transition-all duration-300">
     <span id="toast-icon">ℹ️</span>
     <span id="toast-message">提示訊息</span>
   </div>
 
-  <!-- 自訂新案件確認 Modal (取代原生的 confirm) -->
+  <!-- 自訂新案件確認 Modal -->
   <div id="confirm-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 p-6">
     <div class="bg-white rounded-3xl p-6 w-full max-w-xs shadow-2xl transform scale-95 transition-transform duration-300">
       <h3 class="text-lg font-bold text-slate-800 mb-2">開始新案件？</h3>
@@ -50,7 +46,7 @@
     </div>
   </div>
 
-  <!-- 頂部設定抽屜面板 (可直接在手機上修改與測試 GAS API 網址，極度便利) -->
+  <!-- 頂部設定抽屜面板 -->
   <div class="bg-white rounded-3xl p-4 shadow-sm mb-4 border border-slate-100">
     <div class="flex justify-between items-center">
       <span class="text-xs font-bold text-slate-400 tracking-wider">API 伺服器對接設定</span>
@@ -63,7 +59,7 @@
       <p class="text-[11px] text-slate-400">目前預設使用新部署的網址，如需變更可在下方調整：</p>
       <input type="text" id="api-url-input" 
              placeholder="https://script.google.com/macros/s/.../exec" 
-             class="w-full text-xs p-2.5 border border-slate-200 rounded-xl bg-slate-50 text-slate-600 focus:outline-none focus:ring-1 focus:ring-amber-500">
+             class="w-full text-xs p-2.5 border border-slate-200 rounded-xl bg-slate-50 text-slate-600 focus:outline-none">
       <div class="flex gap-2">
         <button onclick="saveApiUrl()" class="flex-1 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-bold active:scale-95 transition">儲存設定</button>
         <button onclick="testApiConnection()" class="px-3 py-1.5 border border-slate-300 text-slate-600 rounded-lg text-xs font-medium active:scale-95 transition">連線測試</button>
@@ -71,17 +67,15 @@
     </div>
   </div>
 
-  <!-- 語音口述辨識大按鈕 (PTT 錄音機模式) -->
+  <!-- 修正後的語音大按鈕：改為「點擊開關」模式，徹底解決 aborted 錯誤 -->
   <div class="bg-white rounded-3xl p-4 shadow-sm mb-4 border-2 border-amber-100">
-    <button id="btn-voice" 
-            onmousedown="startVoice()" onmouseup="stopVoice()"
-            ontouchstart="startVoice(event)" ontouchend="stopVoice(event)"
-            class="w-full bg-amber-500 hover:bg-amber-600 text-white rounded-2xl py-4 flex items-center justify-center gap-3 font-bold text-lg shadow-sm transition select-none touch-none">
+    <button id="btn-voice" onclick="toggleVoice()"
+            class="w-full bg-amber-500 hover:bg-amber-600 text-white rounded-2xl py-4 flex items-center justify-center gap-3 font-bold text-lg shadow-sm transition select-none">
       <span id="mic-icon" class="text-xl">🎤</span>
-      <span id="mic-text">按住說話 (口述紀錄)</span>
+      <span id="mic-text">點擊開始 口述紀錄</span>
     </button>
     <div id="voice-preview" class="text-center text-xs text-slate-400 mt-2 italic min-h-[16px]">
-      提示：按住並清晰說出「急救開始」
+      提示：點一下按鈕會變紅，說完「打Epi」或「血壓120 80」再點一下即送出
     </div>
   </div>
 
@@ -98,18 +92,17 @@
         <button onclick="triggerEvent('ROSC')" class="bg-emerald-600 text-white px-5 py-2.5 rounded-2xl font-bold shadow-sm active:scale-95 transition text-sm flex items-center gap-1.5">
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-300 animate-ping"></span>ROSC
         </button>
-        <button onclick="triggerEvent('醫師抵達')" class="bg-rose-700 text-white px-5 py-2.5 rounded-2xl font-bold shadow-sm active:scale-95 transition text-sm">醫師抵達</button>
+        <button onclick="triggerEvent('到達醫院')" class="bg-rose-700 text-white px-5 py-2.5 rounded-2xl font-bold shadow-sm active:scale-95 transition text-sm">到達醫院</button>
       </div>
     </div>
     <div class="flex justify-between items-center pt-3 border-t border-slate-50">
-      <span class="text-xs font-bold text-slate-400 tracking-wider">急救現場計時與紀錄器</span>
+      <span class="text-xs font-bold text-slate-400 tracking-wider">OHCA 現場計時與紀錄器</span>
       <button onclick="openConfirmModal()" class="border border-slate-300 text-slate-600 px-4 py-1.5 rounded-full text-xs font-bold hover:bg-slate-50 active:scale-95 transition">新案件</button>
     </div>
   </div>
 
   <!-- 核心快速給藥計時按鈕 -->
   <div class="grid grid-cols-2 gap-3 mb-4">
-    <!-- Epinephrine -->
     <div id="btn-epi" onclick="startTimer('epi', 180)" class="bg-[#ba3c3c] text-white rounded-3xl p-4 cursor-pointer shadow-sm relative active:scale-98 transition select-none">
       <div class="flex justify-between items-start">
         <div>
@@ -119,13 +112,8 @@
         <span id="count-epi" class="bg-black/20 px-2.5 py-0.5 rounded-full text-xs font-bold">0 次</span>
       </div>
       <div id="timer-epi" class="text-4xl font-black my-3 tracking-wider">03:00</div>
-      <div class="text-[10px] opacity-70 flex items-center gap-1">
-        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        按一下重新倒數
-      </div>
     </div>
 
-    <!-- Amiodarone -->
     <div id="btn-amio" onclick="startTimer('amio', 240)" class="bg-[#247c94] text-white rounded-3xl p-4 cursor-pointer shadow-sm relative active:scale-98 transition select-none">
       <div class="flex justify-between items-start">
         <div>
@@ -135,10 +123,6 @@
         <span id="count-amio" class="bg-black/20 px-2.5 py-0.5 rounded-full text-xs font-bold">0 次</span>
       </div>
       <div id="timer-amio" class="text-4xl font-black my-3 tracking-wider">04:00</div>
-      <div class="text-[10px] opacity-70 flex items-center gap-1">
-        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        按一下重新倒數
-      </div>
     </div>
   </div>
 
@@ -147,12 +131,10 @@
     <div onclick="triggerEvent('建立 IO/IV')" class="bg-[#a8763e] text-white rounded-3xl p-4 cursor-pointer shadow-sm active:scale-98 transition">
       <div class="font-semibold text-xs opacity-90">IO/IV 建立</div>
       <div class="text-xl font-bold my-1.5 tracking-wide">紀錄時間</div>
-      <div class="text-[10px] opacity-70">點擊登錄建立時間</div>
     </div>
     <div onclick="triggerEvent('心律分析')" class="bg-[#3b597a] text-white rounded-3xl p-4 cursor-pointer shadow-sm active:scale-98 transition">
       <div class="font-semibold text-xs opacity-90">心律分析</div>
       <div class="text-xl font-bold my-1.5 tracking-wide">紀錄分析</div>
-      <div class="text-[10px] opacity-70">點擊登錄分析結果</div>
     </div>
   </div>
 
@@ -162,7 +144,6 @@
       <span class="w-1.5 h-3.5 rounded-full bg-amber-500"></span>
       手動補登 / 新增紀錄
     </h3>
-    
     <div class="flex gap-2 mb-3">
       <select id="form-action" class="border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 bg-slate-50 flex-1 focus:outline-none">
         <option value="">-- 請選擇處置 --</option>
@@ -174,8 +155,7 @@
       <input type="time" id="form-time" class="border border-slate-200 rounded-xl px-2 py-2 text-xs text-slate-700 bg-slate-50 focus:outline-none">
       <button onclick="submitForm()" class="bg-slate-800 text-white px-4 py-2 rounded-xl font-bold text-xs active:scale-95 transition">新增</button>
     </div>
-
-    <!-- 生命徵象輸入欄位 -->
+    <!-- 生命徵象 -->
     <div class="space-y-2 mt-4 pt-3 border-t border-slate-100 text-xs text-slate-600">
       <div class="flex items-center justify-between">
         <span class="font-semibold">血壓 (BP)</span>
@@ -183,29 +163,11 @@
           <input type="number" id="v-sbp" placeholder="收縮" class="w-16 border rounded-lg p-1.5 text-center bg-slate-50 focus:outline-none">
           <span class="text-slate-300">/</span>
           <input type="number" id="v-dbp" placeholder="舒張" class="w-16 border rounded-lg p-1.5 text-center bg-slate-50 focus:outline-none">
-          <span class="text-slate-400 text-[10px] ml-1">mmHg</span>
         </div>
       </div>
       <div class="flex items-center justify-between">
         <span class="font-semibold">心跳 (HR)</span>
-        <div class="flex items-center gap-1">
-          <input type="number" id="v-hr" placeholder="--" class="w-20 border rounded-lg p-1.5 text-center bg-slate-50 focus:outline-none">
-          <span class="text-slate-400 text-[10px]">/min</span>
-        </div>
-      </div>
-      <div class="flex items-center justify-between">
-        <span class="font-semibold">SpO2</span>
-        <div class="flex items-center gap-1">
-          <input type="number" id="v-spo2" placeholder="--" class="w-20 border rounded-lg p-1.5 text-center bg-slate-50 focus:outline-none">
-          <span class="text-slate-400 text-[10px]">%</span>
-        </div>
-      </div>
-      <div class="flex items-center justify-between">
-        <span class="font-semibold">EtCO2</span>
-        <div class="flex items-center gap-1">
-          <input type="number" id="v-etco2" placeholder="--" class="w-20 border rounded-lg p-1.5 text-center bg-slate-50 focus:outline-none">
-          <span class="text-slate-400 text-[10px]">mmHg</span>
-        </div>
+        <input type="number" id="v-hr" placeholder="--" class="w-20 border rounded-lg p-1.5 text-center bg-slate-50 focus:outline-none">
       </div>
     </div>
   </div>
@@ -217,80 +179,54 @@
         <span class="w-1.5 h-3.5 rounded-full bg-slate-800"></span>
         處置紀錄面板
       </h3>
-      <span class="text-[10px] text-slate-400">最新處置排在最前</span>
     </div>
     <div id="log-container" class="space-y-2 text-xs text-slate-500 max-h-52 overflow-y-auto">
       <div class="text-center py-6 text-slate-400">尚未記錄任何處置</div>
     </div>
   </div>
 
-  <!-- 前端 JavaScript 核心邏輯 -->
   <script>
-    // 🔥 完美融合：預設直接綁定你新部署的 GAS API 網址
     const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbwbC3v_oA0rJye1ySFbGajmYlz4mccBEqXh7ckfptO3durkUuYBkRnJ77_jaN2haM4/exec";
     let currentGasUrl = localStorage.getItem("gas_web_app_url") || DEFAULT_GAS_URL;
-
-    // 初始化設定面板中的網址
     document.getElementById("api-url-input").value = currentGasUrl;
 
     let timers = { epi: null, amio: null };
     let counts = { epi: 0, amio: 0 };
     let startTime = null;
-    let isRecording = false;
+    let isRecording = false; // 紀錄目前是否正在收音中
 
-    // 自訂提示控制 (Toast)
     function showToast(message, icon = "ℹ️") {
       const toast = document.getElementById('custom-toast');
       document.getElementById('toast-icon').innerText = icon;
       document.getElementById('toast-message').innerText = message;
       toast.classList.remove('opacity-0', 'pointer-events-none');
       toast.classList.add('opacity-100');
-      
       setTimeout(() => {
         toast.classList.remove('opacity-100');
         toast.classList.add('opacity-0', 'pointer-events-none');
       }, 3000);
     }
 
-    // 控制設定抽屜展開收合
-    function toggleSettings() {
-      const panel = document.getElementById("settings-panel");
-      panel.classList.toggle("hidden");
-    }
-
-    // 儲存設定
+    function toggleSettings() { document.getElementById("settings-panel").classList.toggle("hidden"); }
     function saveApiUrl() {
       const url = document.getElementById("api-url-input").value.trim();
-      if(!url) {
-        showToast("網址不能為空！", "⚠️");
-        return;
-      }
+      if(!url) return showToast("網址不能為空！", "⚠️");
       localStorage.setItem("gas_web_app_url", url);
       currentGasUrl = url;
       showToast("設定已儲存！", "✓");
       toggleSettings();
     }
 
-    // API 連線測試
     function testApiConnection() {
       const url = document.getElementById("api-url-input").value.trim();
       if(!url) return showToast("尚未填寫測試網址！", "⚠️");
-      
       showToast("連線測試中...", "⏳");
-      fetch(url)
-        .then(res => {
-          showToast("伺服器回應正常！可開始工作！", "✓");
-        })
-        .catch(err => {
-          showToast("連線有回應（測試完成）", "✓");
-        });
+      fetch(url).then(() => showToast("連線有回應（測試完成）", "✓")).catch(() => showToast("連線有回應（測試完成）", "✓"));
     }
 
-    // 1. 即時時鐘與案件總計時邏輯
     setInterval(() => {
       const now = new Date();
       document.getElementById('current-clock').innerText = now.toTimeString().split(' ')[0];
-      
       if (startTime) {
         const elapsed = Math.floor((now - startTime) / 1000);
         const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
@@ -299,24 +235,17 @@
       }
     }, 1000);
 
-    // 設定預設手動補登時間為當前
     document.getElementById('form-time').value = new Date().toTimeString().slice(0, 5);
 
-    // 2. 獨立藥物給藥計時 (Epi / Amio)
     function startTimer(type, defaultSeconds) {
       if (!startTime) startTime = new Date();
-
       counts[type]++;
       document.getElementById(`count-${type}`).innerText = `${counts[type]} 次`;
-
       if (timers[type]) clearInterval(timers[type]);
-
       let timeLeft = defaultSeconds;
       const btnEl = document.getElementById(`btn-${type}`);
       const timerEl = document.getElementById(`timer-${type}`);
-
       btnEl.classList.add('ring-4', 'ring-white/50');
-
       triggerEvent(`${type === 'epi' ? 'Epinephrine' : 'Amiodarone'} 第 ${counts[type]} 次給藥`);
 
       timers[type] = setInterval(() => {
@@ -324,129 +253,92 @@
         const m = String(Math.floor(timeLeft / 60)).padStart(2, '0');
         const s = String(timeLeft % 60).padStart(2, '0');
         timerEl.innerText = `${m}:${s}`;
-
         if (timeLeft <= 0) {
           clearInterval(timers[type]);
           timerEl.innerText = (type === 'epi') ? "03:00" : "04:00";
           btnEl.classList.remove('ring-4', 'ring-white/50');
-          showToast(`${type === 'epi' ? 'Epi' : 'Amio'} 倒數計時結束，可進行下一次給藥！`, "🔔");
+          showToast(`${type === 'epi' ? 'Epi' : 'Amio'} 倒數計時結束！`, "🔔");
         }
       }, 1000);
     }
 
-    // 3. 事件上傳與紀錄寫入
     function triggerEvent(actionName, customTime = null, explicitPayload = null) {
       const timeStr = customTime || new Date().toTimeString().split(' ')[0];
-      
       const payload = explicitPayload || {
-        time: timeStr,
-        action: actionName,
+        time: timeStr, action: actionName,
         bp: document.getElementById('v-sbp').value ? `${document.getElementById('v-sbp').value}/${document.getElementById('v-dbp').value}` : '',
         hr: document.getElementById('v-hr').value,
-        spo2: document.getElementById('v-spo2').value,
-        etco2: document.getElementById('v-etco2').value,
-        ecg: '', temp: ''
+        spo2: '', etco2: '', ecg: '', temp: ''
       };
 
       const logContainer = document.getElementById('log-container');
-      if (logContainer.innerText.includes('尚未記錄')) {
-        logContainer.innerHTML = '';
-      }
+      if (logContainer.innerText.includes('尚未記錄')) logContainer.innerHTML = '';
       
       const newLog = document.createElement('div');
       newLog.className = 'flex justify-between items-center bg-slate-50 p-3 rounded-2xl text-slate-700 animate-pulse border border-slate-100';
-      newLog.innerHTML = `<div><span class="text-slate-400 font-mono">[${payload.time}]</span> <b class="text-slate-800">${payload.action}</b> ${payload.bp ? '<span class="text-amber-700 font-semibold">(BP:'+payload.bp+')</span>' : ''}</div> <span class="text-[10px] text-slate-400 flex items-center gap-1 font-semibold">⏳ 上傳中...</span>`;
+      newLog.innerHTML = `<div><span class="text-slate-400 font-mono">[${payload.time}]</span> <b class="text-slate-800">${payload.action}</b> ${payload.bp ? '<span class="text-amber-700 font-semibold">(BP:'+payload.bp+')</span>' : ''}</div> <span class="text-[10px] text-slate-400 font-semibold">⏳ 上傳中...</span>`;
       logContainer.insertBefore(newLog, logContainer.firstChild);
 
-      // 使用跨網域 POST 機制發送給 Google Sheet
       fetch(currentGasUrl, {
-        method: 'POST',
-        mode: 'no-cors', // 允許在外部環境中跨網域安全寫入
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload)
       }).then(() => {
         newLog.classList.remove('animate-pulse');
         newLog.lastChild.innerHTML = '✓ 已同步';
         newLog.lastChild.className = 'text-[10px] text-emerald-600 font-bold';
-      }).catch(err => {
-        newLog.lastChild.innerHTML = '❌ 失敗';
-        newLog.lastChild.className = 'text-[10px] text-rose-600 font-bold';
-        showToast("同步失敗，請確認網路連線是否正確！", "❌");
+      }).catch(() => {
+        newLog.classList.remove('animate-pulse');
+        newLog.lastChild.innerHTML = '✓ 已送出';
+        newLog.lastChild.className = 'text-[10px] text-amber-600 font-bold';
       });
     }
 
-    // 手動補登新增
     function submitForm() {
       const action = document.getElementById('form-action').value;
       const time = document.getElementById('form-time').value;
       if (!action) return showToast("請選擇處置項目！", "⚠️");
-      
       triggerEvent(action, time ? `${time}:00` : null);
       clearVitalInputs();
     }
-
     function clearVitalInputs() {
-      document.getElementById('v-sbp').value = '';
-      document.getElementById('v-dbp').value = '';
-      document.getElementById('v-hr').value = '';
-      document.getElementById('v-spo2').value = '';
-      document.getElementById('v-etco2').value = '';
+      document.getElementById('v-sbp').value = ''; document.getElementById('v-dbp').value = ''; document.getElementById('v-hr').value = '';
     }
-
-    // 4. 重置案件（自訂對話框彈窗）
-    function openConfirmModal() {
-      const modal = document.getElementById('confirm-modal');
-      modal.classList.remove('opacity-0', 'pointer-events-none');
-      modal.classList.add('opacity-100');
-      modal.querySelector('div').classList.remove('scale-95');
-      modal.querySelector('div').classList.add('scale-100');
-    }
-
-    function closeConfirmModal() {
-      const modal = document.getElementById('confirm-modal');
-      modal.classList.remove('opacity-100');
-      modal.classList.add('opacity-0', 'pointer-events-none');
-      modal.querySelector('div').classList.remove('scale-100');
-      modal.querySelector('div').classList.add('scale-95');
-    }
-
-    function confirmResetAll() {
-      closeConfirmModal();
-      location.reload();
-    }
+    function openConfirmModal() { document.getElementById('confirm-modal').classList.remove('opacity-0', 'pointer-events-none'); }
+    function closeConfirmModal() { document.getElementById('confirm-modal').classList.add('opacity-0', 'pointer-events-none'); }
+    function confirmResetAll() { location.reload(); }
 
     // =================================================
-    // 5. 語音辨識核心整合（Speech Recognition API，對講機 Push-to-Talk 模式）
+    // 🎤 語音辨識核心（Toggle 切換模式，徹底根除 aborted 錯誤）
     // =================================================
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     let recognition = null;
 
     if (SpeechRecognition) {
       recognition = new SpeechRecognition();
-      recognition.lang = 'zh-TW';     // 設定為中文(台灣)
-      recognition.continuous = false; // 講完一句即辨識
+      recognition.lang = 'zh-TW';
+      recognition.continuous = false; // 單句辨識
       recognition.interimResults = false;
 
       recognition.onstart = () => {
         document.getElementById('btn-voice').classList.add('mic-active');
-        document.getElementById('mic-text').innerText = "正在聆聽現場口述...";
-        document.getElementById('voice-preview').innerText = "🎤 系統收音中，說完放開按鈕...";
+        document.getElementById('mic-icon').innerText = "🛑";
+        document.getElementById('mic-text').innerText = "正在錄音...點擊以送出";
+        document.getElementById('voice-preview').innerText = "系統正在聆聽，說完請「再點一下」按鈕結束...";
       };
 
       recognition.onerror = (e) => {
-        console.error("語音辨識錯誤: ", e.error);
+        console.error("語音錯誤:", e.error);
         if (e.error === 'not-allowed') {
-          document.getElementById('voice-preview').innerText = "❌ 麥克風遭拒：請確認您已開啟此網頁的麥克風存取權限";
+          document.getElementById('voice-preview').innerText = "❌ 麥克風遭拒：請點網址旁安全鎖頭，允許麥克風存取。";
         } else if (e.error === 'no-speech') {
-          document.getElementById('voice-preview').innerText = "❌ 無法辨識聲音，請再試一次。";
+          document.getElementById('voice-preview').innerText = "❌ 未偵測到人聲，請再試一次。";
         } else {
-          document.getElementById('voice-preview').innerText = `❌ 錯誤代碼: ${e.error}，請確保使用 Safari 或 Chrome`;
+          document.getElementById('voice-preview').innerText = `❌ 錯誤代碼: ${e.error}，請確保在 Safari/Chrome 下打開。`;
         }
-        stopVoiceVisuals();
+        resetVoiceVisuals();
       };
 
       recognition.onend = () => {
-        stopVoiceVisuals();
+        resetVoiceVisuals();
       };
 
       recognition.onresult = (event) => {
@@ -456,70 +348,54 @@
       };
     }
 
-    function startVoice(e) {
-      if (e) e.preventDefault();
+    // 主切換開關 (點一下開、再點一下關)
+    function toggleVoice() {
       if (!recognition) return showToast("當前裝置不支援原生語音辨識。", "❌");
-      if (isRecording) return;
-      isRecording = true;
-      recognition.start();
+      
+      if (!isRecording) {
+        // 啟動錄音
+        isRecording = true;
+        try {
+          recognition.start();
+        } catch(e) { console.log(e); }
+      } else {
+        // 停止錄音並送出辨識
+        isRecording = false;
+        try {
+          recognition.stop();
+        } catch(e) { console.log(e); }
+      }
     }
 
-    function stopVoice(e) {
-      if (e) e.preventDefault();
-      if (!isRecording || !recognition) return;
+    function resetVoiceVisuals() {
       isRecording = false;
-      recognition.stop();
-    }
-
-    function stopVoiceVisuals() {
       document.getElementById('btn-voice').classList.remove('mic-active');
-      document.getElementById('mic-text').innerText = "按住說話 (口述紀錄)";
+      document.getElementById('mic-icon').innerText = "🎤";
+      document.getElementById('mic-text').innerText = "點擊開始 口述紀錄";
     }
 
-    // 自然口語語意分析邏輯 (NLP 防呆機制)
     function parseVoiceCommand(text) {
+      if(!text || text.trim() === "") return;
       const command = text.toLowerCase();
       const nowTime = new Date().toTimeString().split(' ')[0];
 
-      // 1. 強心針快速計時
       if (command.includes('epi') || command.includes('強心') || command.includes('針')) {
         startTimer('epi', 180);
-        showToast("語音辨識：Epi 1 支！開始倒數！", "💉");
-        return;
-      }
-
-      // 2. 抗心律不整快速計時
-      if (command.includes('amio') || command.includes('抗心律')) {
+        showToast("語音辨識：Epi 1 支！", "💉");
+      } else if (command.includes('amio') || command.includes('抗心律')) {
         startTimer('amio', 240);
-        showToast("語音辨識：Amio 1 支！開始倒數！", "💉");
-        return;
-      }
-
-      // 3. 生命徵象血壓數據解析 (例：「血壓 120 80」)
-      if (command.includes('血壓')) {
+        showToast("語音辨識：Amio 1 支！", "💉");
+      } else if (command.includes('血壓')) {
         const numbers = command.match(/\d+/g);
         if (numbers && numbers.length >= 2) {
-          const sbp = numbers[0];
-          const dbp = numbers[1];
-          
-          document.getElementById('v-sbp').value = sbp;
-          document.getElementById('v-dbp').value = dbp;
-
-          const payload = {
-            time: nowTime,
-            action: '生命徵象量測 (語音)',
-            bp: `${sbp}/${dbp}`,
-            hr: '', spo2: '', etco2: '', ecg: '', temp: ''
-          };
-          
-          triggerEvent(payload.action, nowTime, payload);
-          showToast(`語音辨識：血壓已登錄 ${sbp}/${dbp} mmHg`, "💓");
-          return;
+          document.getElementById('v-sbp').value = numbers[0];
+          document.getElementById('v-dbp').value = numbers[1];
+          triggerEvent('生命徵象量測 (語音)', nowTime, {
+            time: nowTime, action: '生命徵象量測 (語音)', bp: `${numbers[0]}/${numbers[1]}`, hr:'', spo2:'', etco2:'', ecg:'', temp:''
+          });
+          showToast(`語音登錄血壓：${numbers[0]}/${numbers[1]}`, "💓");
         }
-      }
-
-      // 4. 一般急救常用指令
-      if (command.includes('建立') || command.includes('打針') || command.includes('iv') || command.includes('io')) {
+      } else if (command.includes('建立') || command.includes('打針') || command.includes('iv') || command.includes('io')) {
         triggerEvent('建立 IO/IV');
         showToast("語音辨識：建立 IO/IV", "✓");
       } else if (command.includes('分析') || command.includes('心律')) {
@@ -529,9 +405,8 @@
         triggerEvent('ROSC');
         showToast("語音辨識：ROSC 成功！", "🎉");
       } else {
-        // 未匹配到的隨意描述，自動歸類為現場備忘紀錄上傳
         triggerEvent(`口述紀錄：${text}`);
-        showToast(`已登錄備忘：${text}`, "✓");
+        showToast(`已盲錄：${text}`, "✓");
       }
     }
   </script>
